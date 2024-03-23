@@ -123,3 +123,78 @@ str_valMin:	.asciiz	"\nEl valor minimo esta en ("
 str_conValor:	.asciiz	") con valor "
 
 str_matTiene:	.asciiz	"\n\nLa matriz tiene dimension "
+
+  .text
+
+main:
+  # Imprimir título
+  li $v0, 4
+  la $a0, str_titulo
+  syscall
+
+  # Cargar en $s0 la matriz de trabajo
+  la $s0, mat1
+  # Cargar en cada registro los valores de las opciones válidas
+  li $s1, 1
+  li $s2, 3
+  li $s3, 4
+  li $s4, 7
+  # Establecemos un while 
+while:
+  # Imprimir menú de opciones
+  li $v0, 4
+  la $a0, str_menu
+  syscall
+
+  # Pedir número a usuario
+  li $v0, 5
+  syscall
+  move $s5, $v0  
+  
+  jal opciones
+
+opciones:
+
+  # Comprobar si la opción es válida
+  beq $s5, $zero, end_program
+
+  # Mensaje de opción no válida
+  li $v0, 4
+  la $a0, str_errorOpc
+  syscall
+  j while
+
+cambiar_mat:
+
+  li $v0, 4
+  la $a0, str_elijeMat
+  syscall
+
+  j while
+
+tres_y_cuatro:
+
+  li $v0, 4
+  la $a0, str_indFila
+  syscall
+
+  j while
+
+encontrar_min:
+
+  li $v0, 4
+  la $a0, str_valMin
+  syscall
+
+  j while
+
+end_program:
+  # Imprimir mensaje final
+  li $v0, 4
+  la $a0, str_termina
+  syscall
+
+  # Terminar programa
+  li $v0, 10
+  syscall
+
