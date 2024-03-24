@@ -139,10 +139,10 @@ main:
   li $s3, 4   # Intercambiar elemento por opuesto
   li $s4, 7   # Encontrar el mínimo
 
-  # Establecemos un while 
-while:
-
   jal print_mat
+
+# Establecemos un while 
+while:
 
   # Imprimir menú de opciones
   li $v0, 4
@@ -170,17 +170,9 @@ while:
 
 select_change_mat:
 
+  jal change_mat
+
   jal print_mat # Imprimir matriz
-
-  li $v0, 4
-  la $a0, str_elijeMat
-  syscall
-
-  li $v0, 1
-  syscall
-  move $t4, $v0
-
-  
 
   # jal change_mat
 
@@ -243,6 +235,8 @@ print_mat:
   la $a0, LF
   syscall
 
+  li $t0, 0
+
   # Imprimir elementos
   print_while:
   # Verificar que no se han impreso todas las filas
@@ -275,8 +269,80 @@ print_mat:
   
 print_mat_fin:
 
+  li $v0, 11
+  la $a0, LF
+  syscall
+
+  li $v0, 11
+  la $a0, LF
+  syscall
+
   jr $ra # Regresar al invocante de la función
 
-# change_mat:
+change_mat:
 
-# change_mat_fin:
+  li $v0, 4
+  la $a0, str_elijeMat
+  syscall
+
+  li $v0, 5
+  syscall
+  move $t5, $v0
+
+  li $t6, 1
+  li $t7, 6
+  blt $t5, $t6, mat_number_error
+  bgt $t5, $t7, mat_number_error
+
+  li $t0, 1
+  li $t1, 2
+  li $t2, 3
+  li $t3, 4
+  li $t4, 5
+  li $t6, 6
+
+  beq $t5, $t0, selected_mat1
+  beq $t5, $t1, selected_mat2
+  beq $t5, $t2, selected_mat3
+  beq $t5, $t3, selected_mat4
+  beq $t5, $t4, selected_mat5
+  beq $t5, $t6, selected_mat6
+
+  selected_mat1:
+  la $s0, mat1
+  jal print_mat
+  j while
+
+  selected_mat2:
+  la $s0, mat2
+  jal print_mat
+  j while
+
+  selected_mat3:
+  la $s0, mat3
+  jal print_mat
+  j while
+
+  selected_mat4:
+  la $s0, mat4
+  jal print_mat
+  j while
+
+  selected_mat5:
+  la $s0, mat5
+  jal print_mat
+  j while
+  
+  selected_mat6:
+  la $s0, mat6
+  jal print_mat
+  j while
+
+change_mat_fin:
+  
+  mat_number_error: 
+  li $v0, 4
+  la $a0, str_numMatMal
+  syscall
+
+  jr $ra
