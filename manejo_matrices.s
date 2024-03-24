@@ -141,6 +141,9 @@ main:
 
   # Establecemos un while 
 while:
+
+  jal print_mat
+
   # Imprimir menú de opciones
   li $v0, 4
   la $a0, str_menu
@@ -168,6 +171,16 @@ while:
 select_change_mat:
 
   jal print_mat # Imprimir matriz
+
+  li $v0, 4
+  la $a0, str_elijeMat
+  syscall
+
+  li $v0, 1
+  syscall
+  move $t4, $v0
+
+  
 
   # jal change_mat
 
@@ -259,7 +272,6 @@ print_mat:
   move $t1, $zero     # Columna impresa = 0
   addi $t0, $t0, 1    # Fila impresa += 1
   j print_while       # Ir al principio de la impresión
-
   
 print_mat_fin:
 
