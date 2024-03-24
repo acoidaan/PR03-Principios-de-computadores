@@ -167,12 +167,9 @@ while:
 
 select_change_mat:
 
-  # Preparo argumentos para imprimir matriz
-  la $a1, 0($s0)      # Número de filas
-  la $a2, 4($s0)      # Número de columnas
-  li $a3, 0           # Índice de fila inicial
-
   jal print_mat # Imprimir matriz
+
+  # jal change_mat
 
 # select_change_elto:
 
@@ -267,7 +264,6 @@ print_mat:
 print_mat_fin:
 
   jr $ra # Regresar al invocante de la función
-# change_mat:
 
 # change_mat:
 
