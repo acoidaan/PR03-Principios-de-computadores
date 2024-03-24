@@ -80,7 +80,6 @@ mat4:	.word	16
 	.word	1
 	.float	-90.57, -65.11, -58.21, -73.23, -89.38, -79.25,  16.82,  66.3
 	.float	-96.14, -97.16, -24.66,   5.27, -33.5 , -13.09,  27.13, -74.83
-
 # structMat mat5 {
 #   1,
 #   1,
@@ -123,7 +122,7 @@ str_valMin:	.asciiz	"\nEl valor minimo esta en ("
 str_conValor:	.asciiz	") con valor "
 
 str_matTiene:	.asciiz	"\n\nLa matriz tiene dimension "
-
+str_x:  .asciiz "x"
   .text
 
 main:
@@ -150,43 +149,41 @@ while:
   li $v0, 5
   syscall
   move $s5, $v0  
-  
-  jal opciones
 
-opciones:
+  # Elegir que opción del menu se va a realizar
+  beqz $s5, end_program
+  beq $s5, $s1, select_change_mat
+  # beq $s5, $s2, select_change_elto
+  # beq $s5, $s3, select_swap
+  # beq $s5, $s4, select_find_min
 
-  # Comprobar si la opción es válida
-  beq $s5, $zero, end_program
-
-  # Mensaje de opción no válida
+    # Mensaje de opción no válida
   li $v0, 4
   la $a0, str_errorOpc
   syscall
   j while
 
-cambiar_mat:
 
-  li $v0, 4
-  la $a0, str_elijeMat
-  syscall
+select_change_mat:
+  # Pedir al usuario que matriz quiere
+  move $a0, $s5
 
-  j while
+  # Preparo argumentos para imprimir matriz
+  la $a1, 0($a0)      # Número de filas
+  la $a2, 4($a0)  # Número de columnas
+  # addi $a0, $a0, elementos
+  li $a3, 0           # Índice de fila inicial
 
-tres_y_cuatro:
+  jal print_mat # Imprimir matriz
 
-  li $v0, 4
-  la $a0, str_indFila
-  syscall
+# select_change_elto:
 
-  j while
+# select_swap:
 
-encontrar_min:
+# select_intercambia:
 
-  li $v0, 4
-  la $a0, str_valMin
-  syscall
+# select_find_min:
 
-  j while
 
 end_program:
   # Imprimir mensaje final
@@ -198,3 +195,76 @@ end_program:
   li $v0, 10
   syscall
 
+print_mat:
+  # Argumentos
+  # $a0 - Dirección base de matriz de trabajo
+  # $a1 - Número de filas
+  # $a2 - Número de columnas
+  # $a3 - Índice fila inicial
+  # $t0 - Filas impresas
+  # $t1 - Índice columna
+
+  # Imprimir dimensiones
+
+  la $t4, mat1
+  lw $t6, 0($t4)
+  lw $t7, 4($t4)
+
+  li $v0, 4
+  la $a0, str_matTiene
+  syscall
+
+  li $v0, 1
+  move $a0, $t6
+  syscall
+
+  li $v0, 4
+  la $a0, str_x
+  syscall
+
+  li $v0, 1
+  move $a0, $t7
+  syscall
+
+  li $v0, 11
+  la $a0, LF
+  syscall
+
+  print_while:
+  # Imprimir elementos
+  # Verificar que no se han impreso todas las filas
+  beq $t0, $t6, print_mat_fin
+
+  print_row: 
+  mul $t2, $t0, $a2
+  add $t2, $t2, $t1
+  mul $t2, $t2, sizeF
+  add $t3, $t4, $t2
+  addi $t3, $t3, 8
+
+  l.s $f12, 0($t3)
+  li $v0, 2
+  syscall
+
+  li $v0, 11
+  li $a0, 32
+  syscall
+
+  addi $t1, $t1, 1
+  bgt $t1, $t7, next_row 
+  j print_row
+
+  next_row: 
+  move $t1, $zero
+  addi $t0, $t0, 1
+  j print_while
+
+  
+print_mat_fin:
+
+  jr $ra # Regresar al invocante de la función
+# change_mat:
+
+# change_mat:
+
+# change_mat_fin:
