@@ -134,10 +134,11 @@ main:
   # Cargar en $s0 la matriz de trabajo
   la $s0, mat1
   # Cargar en cada registro los valores de las opciones válidas
-  li $s1, 1
-  li $s2, 3
-  li $s3, 4
-  li $s4, 7
+  li $s1, 1   # Cambiar matriz trabajo
+  li $s2, 3   # Cambiar valor elemento
+  li $s3, 4   # Intercambiar elemento por opuesto
+  li $s4, 7   # Encontrar el mínimo
+
   # Establecemos un while 
 while:
   # Imprimir menú de opciones
@@ -161,17 +162,14 @@ while:
   li $v0, 4
   la $a0, str_errorOpc
   syscall
+
   j while
 
-
 select_change_mat:
-  # Pedir al usuario que matriz quiere
-  move $a0, $s5
 
   # Preparo argumentos para imprimir matriz
-  la $a1, 0($a0)      # Número de filas
-  la $a2, 4($a0)  # Número de columnas
-  # addi $a0, $a0, elementos
+  la $a1, 0($s0)      # Número de filas
+  la $a2, 4($s0)      # Número de columnas
   li $a3, 0           # Índice de fila inicial
 
   jal print_mat # Imprimir matriz
@@ -206,58 +204,64 @@ print_mat:
 
   # Imprimir dimensiones
 
-  la $t4, mat1
-  lw $t6, 0($t4)
-  lw $t7, 4($t4)
+  move $t4, $s0     # Guardar matriz de trabajo
+  lw $t6, 0($t4)  # $t6 = nº de filas
+  lw $t7, 4($t4)  # $t7 = nº de columnas
 
+  # Imprimir mensaje de dimensiones de la matriz
   li $v0, 4
   la $a0, str_matTiene
   syscall
 
+  # Imprimir número de filas
   li $v0, 1
   move $a0, $t6
   syscall
 
+  # Imprimir "x"
   li $v0, 4
   la $a0, str_x
   syscall
 
+  # Imprimir número de columnas
   li $v0, 1
   move $a0, $t7
   syscall
 
+  # Imprimir salto de línea
   li $v0, 11
   la $a0, LF
   syscall
 
-  print_while:
   # Imprimir elementos
+  print_while:
   # Verificar que no se han impreso todas las filas
   beq $t0, $t6, print_mat_fin
 
   print_row: 
-  mul $t2, $t0, $a2
-  add $t2, $t2, $t1
-  mul $t2, $t2, sizeF
-  add $t3, $t4, $t2
-  addi $t3, $t3, 8
+  mul $t2, $t0, $t7     # $t2 = filas impresas * 
+  add $t2, $t2, $t1     # $t2 += columna impresa
+  mul $t2, $t2, sizeF   # $t2 *= tam_elemento
+  add $t3, $t4, $t2     # $t3 = base + desplazamiento
+  addi $t3, $t3, 8      # Ajustar $t3 para imprimir elementos
 
-  l.s $f12, 0($t3)
-  li $v0, 2
+  l.s $f12, 0($t3)      # $t3 = $f12
+  li $v0, 2             # Imprimir flotante
+  syscall             
+
+  li $v0, 11            # Imprimrir caracter
+  li $a0, 32            # Imprimir espacio
   syscall
 
-  li $v0, 11
-  li $a0, 32
-  syscall
-
-  addi $t1, $t1, 1
-  bgt $t1, $t7, next_row 
-  j print_row
+  addi $t1, $t1, 1          # columna impresa += 1
+  bge $t1, $t7, next_row    # Si columna_impresa >= nº col => next_row
+  
+  j print_row     # Imprimir siguiente elemento de la fila
 
   next_row: 
-  move $t1, $zero
-  addi $t0, $t0, 1
-  j print_while
+  move $t1, $zero     # Columna impresa = 0
+  addi $t0, $t0, 1    # Fila impresa += 1
+  j print_while       # Ir al principio de la impresión
 
   
 print_mat_fin:
