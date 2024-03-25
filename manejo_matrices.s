@@ -155,12 +155,11 @@ pedir_num:
   syscall
   move $s5, $v0  
 
-
   # Elegir que opción del menu se va a realizar
   beqz $s5, end_program
-  beq $s5, $s1, select_change_mat
+  beq $s5, $s1, select_swap
   beq $s5, $s2, select_change_elto
-  # beq $s5, $s3, select_swap
+  beq $s5, $s3, select_intercambia
   # beq $s5, $s4, select_find_min
 
     # Mensaje de opción no válida
@@ -172,21 +171,99 @@ pedir_num:
 
   j menu
 
-select_change_mat:
+select_swap:
 
-  jal change_mat
+  li $v0, 4
+  la $a0, str_elijeMat
+  syscall
 
-  jal print_mat # Imprimir matriz
+  li $v0, 5
+  syscall
+  move $t5, $v0
+
+  li $t6, 1
+  li $t7, 6
+  blt $t5, $t6, mat_number_error
+  bgt $t5, $t7, mat_number_error
+
+  jal swap
+
+  j menu
+
+  mat_number_error: 
+  li $v0, 4
+  la $a0, str_numMatMal
+  syscall
+
+  jal print_mat
 
   j menu
 
 select_change_elto:
 
+  # Preparar argumentos
+  move $t4, $s0   # $t4 = dirección base de matriz de trabajo
+  lw $t8, 0($t4)  # $t8 = nº de filas
+  lw $t9, 4($t4)  # $t9 = nº de columnas
+
+  li $v0, 4
+  la $a0, str_indFila
+  syscall
+
+  li $v0, 5
+  syscall
+  move $t5, $v0
+
+  bge $t5, $t8, error_dim_fila
+  bltz $t5, error_dim_fila
+
+  li $v0, 4
+  la $a0, str_indCol
+  syscall
+
+  li $v0, 5
+  syscall
+  move $t6, $v0
+
+  bge $t6, $t9, error_dim_col
+  bltz $t6, error_dim_col
+
   jal change_elto
 
-# select_swap:
+  j menu
 
-# select_intercambia:
+  error_dim_fila:
+
+  li $v0, 4
+  la $a0, str_errorFil
+  syscall
+
+  li $v0, 11
+  la $a0, LF
+  syscall
+
+  jal print_mat
+
+  j menu
+
+  error_dim_col:
+  li $v0, 4
+  la $a0, str_errorCol
+  syscall
+
+  li $v0, 11
+  la $a0, LF
+  syscall
+
+  jal print_mat
+
+  j menu
+
+  jal change_elto
+
+select_intercambia:
+
+  jal intercambia
 
 # select_find_min:
 
@@ -293,20 +370,7 @@ print_mat_fin:
 
   jr $ra # Regresar al invocante de la función
 
-change_mat:
-
-  li $v0, 4
-  la $a0, str_elijeMat
-  syscall
-
-  li $v0, 5
-  syscall
-  move $t5, $v0
-
-  li $t6, 1
-  li $t7, 6
-  blt $t5, $t6, mat_number_error
-  bgt $t5, $t7, mat_number_error
+swap:
 
   li $t0, 1
   li $t1, 2
@@ -352,43 +416,13 @@ change_mat:
   jal print_mat
   j menu
 
-change_mat_fin:
-  
-  mat_number_error: 
-  li $v0, 4
-  la $a0, str_numMatMal
-  syscall
+swap_fin:
+
+  jal print_mat # Imprimir matriz
 
   jr $ra
 
 change_elto:
-
-  # Preparar argumentos
-  move $t4, $s0   # $t4 = dirección base de matriz de trabajo
-  lw $t8, 0($t4)  # $t8 = nº de filas
-  lw $t9, 4($t4)  # $t9 = nº de columnas
-
-  li $v0, 4
-  la $a0, str_indFila
-  syscall
-
-  li $v0, 5
-  syscall
-  move $t5, $v0
-
-  bge $t5, $t8, error_dim_fila
-  bltz $t5, error_dim_fila
-
-  li $v0, 4
-  la $a0, str_indCol
-  syscall
-
-  li $v0, 5
-  syscall
-  move $t6, $v0
-
-  bge $t6, $t9, error_dim_col
-  bltz $t6, error_dim_col
 
   li $v0, 4
   la $a0, str_nuevoValor
@@ -407,37 +441,10 @@ change_elto:
 
   s.s $f4, 0($t7)
 
-  j change_elto_fin
-
-  error_dim_fila:
-
-  li $v0, 4
-  la $a0, str_errorFil
-  syscall
-
-  li $v0, 11
-  la $a0, LF
-  syscall
-
-  jal print_mat
-
-  j menu
-
-  error_dim_col:
-  li $v0, 4
-  la $a0, str_errorCol
-  syscall
-
-  li $v0, 11
-  la $a0, LF
-  syscall
-
-  jal print_mat
-
-  j menu
-
 change_elto_fin:
 
   jal print_mat
 
   j menu
+
+intercambia:
