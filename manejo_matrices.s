@@ -132,7 +132,7 @@ main:
   syscall
 
   # Cargar en $s0 la matriz de trabajo
-  la $s0, mat1
+  la $s0, mat5
   # Cargar en cada registro los valores de las opciones válidas
   li $s1, 1   # Cambiar matriz trabajo
   li $s2, 3   # Cambiar valor elemento
@@ -235,7 +235,11 @@ print_mat:
   la $a0, LF
   syscall
 
+  # Inicializar los argumentos otra vez
   li $t0, 0
+  li $t1, 0
+  li $t2, 0
+  li $t3, 0
 
   # Imprimir elementos
   print_while:
@@ -243,7 +247,7 @@ print_mat:
   beq $t0, $t6, print_mat_fin
 
   print_row: 
-  mul $t2, $t0, $t7     # $t2 = filas impresas * 
+  mul $t2, $t0, $t7     # $t2 = filas impresas * nº columnas
   add $t2, $t2, $t1     # $t2 += columna impresa
   mul $t2, $t2, sizeF   # $t2 *= tam_elemento
   add $t3, $t4, $t2     # $t3 = base + desplazamiento
@@ -263,6 +267,10 @@ print_mat:
   j print_row     # Imprimir siguiente elemento de la fila
 
   next_row: 
+  li $v0, 11
+  la $a0, LF
+  syscall
+  
   move $t1, $zero     # Columna impresa = 0
   addi $t0, $t0, 1    # Fila impresa += 1
   j print_while       # Ir al principio de la impresión
