@@ -257,7 +257,7 @@ print_mat:
   add $t2, $t2, $t1     # $t2 += columna impresa
   mul $t2, $t2, sizeF   # $t2 *= tam_elemento
   add $t3, $t4, $t2     # $t3 = base + desplazamiento
-  addi $t3, $t3, 8      # Ajustar $t3 para imprimir elementos
+  addi $t3, $t3, elementos     # Ajustar $t3 para imprimir elementos
 
   l.s $f12, 0($t3)      # $t3 = $f12
   li $v0, 2             # Imprimir flotante
@@ -363,20 +363,77 @@ change_mat_fin:
 
 change_elto:
 
+  # Preparar argumentos
+  move $t4, $s0   # $t4 = dirección base de matriz de trabajo
+  lw $t8, 0($t4)  # $t8 = nº de filas
+  lw $t9, 4($t4)  # $t9 = nº de columnas
+
   li $v0, 4
   la $a0, str_indFila
   syscall
 
-  li $v0, 1
+  li $v0, 5
   syscall
   move $t5, $v0
+
+  bge $t5, $t8, error_dim_fila
+  bltz $t5, error_dim_fila
 
   li $v0, 4
   la $a0, str_indCol
   syscall
 
-  li $v0, 1
+  li $v0, 5
   syscall
   move $t6, $v0
 
+  bge $t6, $t8, error_dim_col
+  bltz $t6, error_dim_col
+
+  li $v0, 4
+  la $a0, str_nuevoValor
+  syscall
+
+  li $v0, 6
+  syscall
+  mov.s $f4, $f0
+
+  # Calcular dirección a cambiar
+  mul $t7, $t5, $t9   # fila * nº columnas
+  add $t7, $t7, $t6   # (fila * nºcolumnas) + columna
+  mul $t7, $t7, sizeF # ((fila * nºcolumnas) + columna) * tamaño_float
+  add $t7, $t7, $t4   # Dirección base más desplazamiento
+  addi $t7, $t7, elementos  # Ajustar para llegar a elementos
+
+  s.s $f4, 0($t7)
+
+  j change_elto_fin
+
+  error_dim_fila:
+
+  li $v0, 4
+  la $a0, str_errorFil
+  syscall
+
+  li $v0, 11
+  la $a0, LF
+  syscall
+
+  j menu
+
+  error_dim_col:
+  li $v0, 4
+  la $a0, str_errorCol
+  syscall
+
+  li $v0, 11
+  la $a0, LF
+  syscall
+
+  j menu
+
 change_elto_fin:
+
+  jal print_mat
+
+  j menu
