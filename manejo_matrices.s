@@ -157,7 +157,7 @@ pedir_num:
 
   # Elegir que opción del menu se va a realizar
   beqz $s5, end_program
-  beq $s5, $s1, select_swap
+  beq $s5, $s1, select_change_mat
   beq $s5, $s2, select_change_elto
   beq $s5, $s3, select_intercambia
   # beq $s5, $s4, select_find_min
@@ -171,7 +171,7 @@ pedir_num:
 
   j menu
 
-select_swap:
+select_change_mat:
 
   li $v0, 4
   la $a0, str_elijeMat
@@ -186,7 +186,7 @@ select_swap:
   blt $t5, $t6, mat_number_error
   bgt $t5, $t7, mat_number_error
 
-  jal swap
+  jal change_mat
 
   j menu
 
@@ -274,6 +274,8 @@ error_dim_fila:
   li $v0, 11
   la $a0, LF
   syscall
+
+  move $t6, $s2
 
   jal print_mat
 
@@ -397,7 +399,7 @@ print_mat_fin:
 
   jr $ra # Regresar al invocante de la función
 
-swap:
+change_mat:
 
   li $t0, 1
   li $t1, 2
@@ -443,7 +445,7 @@ swap:
   jal print_mat
   j menu
 
-swap_fin:
+change_mat_fin:
 
   jal print_mat # Imprimir matriz
 
@@ -474,7 +476,54 @@ change_elto_fin:
 
   j menu
 
+swap:
+
+  lwc1 $f0, 0($a0)
+  lwc1 $f1, 0($a1)
+  swc1 $f1, 0($a0)
+  swc1 $f0, 0($a1)
+
+swap_fin:
+
+  jr $ra
+
 intercambia:
 
+  # $t4 - dirección base
+  # $t5 - fila seleccionada
+  # $t6 - columna seleccionada
+  # $t8 - nFil
+  # $t9 - nCol
+  
+  li $t0, 0
+  li $t1, 0
+
+  # Calcular índices del elemento opuesto
+  sub $t7, $t8, $t5
+  sub $t7, $t7, 1
+  sub $t0, $t9, $t6
+  sub $t0, $t0, 1
+
+  # Calcular dirección del elemento seleccionado
+  mul $t1, $t5, $t9
+  add $t1, $t1, $t6
+  mul $t1, $t1, 4
+  add $t1, $t1, $t4
+  addi $t1, $t1, 8
+
+  # Calcular dirección del elemento opuesto
+  mul $t2, $t7, $t9
+  add $t2, $t2, $t0
+  mul $t2, $t2, sizeF
+  add $t2, $t2, $t4
+  addi $t2, $t2, 8
+
+  move $a0, $t1
+  move $a1, $t2
+  jal swap
 
 intercambia_fin:
+
+  jal print_mat
+
+  j menu
