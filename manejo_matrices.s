@@ -132,7 +132,7 @@ main:
   syscall
 
   # Cargar en $s0 la matriz de trabajo
-  la $s0, mat5
+  la $s0, mat1
   # Cargar en cada registro los valores de las opciones válidas
   li $s1, 1   # Cambiar matriz trabajo
   li $s2, 3   # Cambiar valor elemento
@@ -141,23 +141,25 @@ main:
 
   jal print_mat
 
-# Establecemos un while 
-while:
+# Establecemos un menu 
+menu:
 
   # Imprimir menú de opciones
   li $v0, 4
   la $a0, str_menu
   syscall
 
+pedir_num:
   # Pedir número a usuario
   li $v0, 5
   syscall
   move $s5, $v0  
 
+
   # Elegir que opción del menu se va a realizar
   beqz $s5, end_program
   beq $s5, $s1, select_change_mat
-  # beq $s5, $s2, select_change_elto
+  beq $s5, $s2, select_change_elto
   # beq $s5, $s3, select_swap
   # beq $s5, $s4, select_find_min
 
@@ -166,7 +168,9 @@ while:
   la $a0, str_errorOpc
   syscall
 
-  j while
+  jal print_mat
+
+  j menu
 
 select_change_mat:
 
@@ -174,9 +178,11 @@ select_change_mat:
 
   jal print_mat # Imprimir matriz
 
-  # jal change_mat
+  j menu
 
-# select_change_elto:
+select_change_elto:
+
+  jal change_elto
 
 # select_swap:
 
@@ -270,7 +276,7 @@ print_mat:
   li $v0, 11
   la $a0, LF
   syscall
-  
+
   move $t1, $zero     # Columna impresa = 0
   addi $t0, $t0, 1    # Fila impresa += 1
   j print_while       # Ir al principio de la impresión
@@ -319,32 +325,32 @@ change_mat:
   selected_mat1:
   la $s0, mat1
   jal print_mat
-  j while
+  j menu
 
   selected_mat2:
   la $s0, mat2
   jal print_mat
-  j while
+  j menu
 
   selected_mat3:
   la $s0, mat3
   jal print_mat
-  j while
+  j menu
 
   selected_mat4:
   la $s0, mat4
   jal print_mat
-  j while
+  j menu
 
   selected_mat5:
   la $s0, mat5
   jal print_mat
-  j while
+  j menu
   
   selected_mat6:
   la $s0, mat6
   jal print_mat
-  j while
+  j menu
 
 change_mat_fin:
   
@@ -354,3 +360,23 @@ change_mat_fin:
   syscall
 
   jr $ra
+
+change_elto:
+
+  li $v0, 4
+  la $a0, str_indFila
+  syscall
+
+  li $v0, 1
+  syscall
+  move $t5, $v0
+
+  li $v0, 4
+  la $a0, str_indCol
+  syscall
+
+  li $v0, 1
+  syscall
+  move $t6, $v0
+
+change_elto_fin:
