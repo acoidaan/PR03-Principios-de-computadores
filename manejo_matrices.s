@@ -232,7 +232,40 @@ select_change_elto:
 
   j menu
 
-  error_dim_fila:
+select_intercambia:
+
+  # Preparar argumentos
+  move $t4, $s0   # $t4 = dirección base de matriz de trabajo
+  lw $t8, 0($t4)  # $t8 = nº de filas
+  lw $t9, 4($t4)  # $t9 = nº de columnas
+
+  li $v0, 4
+  la $a0, str_indFila
+  syscall
+
+  li $v0, 5
+  syscall
+  move $t5, $v0
+
+  bge $t5, $t8, error_dim_fila
+  bltz $t5, error_dim_fila
+
+  li $v0, 4
+  la $a0, str_indCol
+  syscall
+
+  li $v0, 5
+  syscall
+  move $t6, $v0
+
+  bge $t6, $t9, error_dim_col
+  bltz $t6, error_dim_col
+
+  jal intercambia
+
+  j menu
+
+error_dim_fila:
 
   li $v0, 4
   la $a0, str_errorFil
@@ -258,12 +291,6 @@ select_change_elto:
   jal print_mat
 
   j menu
-
-  jal change_elto
-
-select_intercambia:
-
-  jal intercambia
 
 # select_find_min:
 
@@ -448,3 +475,6 @@ change_elto_fin:
   j menu
 
 intercambia:
+
+
+intercambia_fin:
