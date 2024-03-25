@@ -387,7 +387,7 @@ change_elto:
   syscall
   move $t6, $v0
 
-  bge $t6, $t8, error_dim_col
+  bge $t6, $t9, error_dim_col
   bltz $t6, error_dim_col
 
   li $v0, 4
@@ -419,6 +419,8 @@ change_elto:
   la $a0, LF
   syscall
 
+  jal print_mat
+
   j menu
 
   error_dim_col:
@@ -429,6 +431,8 @@ change_elto:
   li $v0, 11
   la $a0, LF
   syscall
+
+  jal print_mat
 
   j menu
 
