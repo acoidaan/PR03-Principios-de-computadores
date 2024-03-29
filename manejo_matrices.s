@@ -160,7 +160,7 @@ pedir_num:
   beq $s5, $s1, select_change_mat
   beq $s5, $s2, select_change_elto
   beq $s5, $s3, select_intercambia
-  # beq $s5, $s4, select_find_min
+  beq $s5, $s4, select_find_min
 
     # Mensaje de opción no válida
   li $v0, 4
@@ -203,8 +203,8 @@ select_change_elto:
 
   # Preparar argumentos
   move $t4, $s0   # $t4 = dirección base de matriz de trabajo
-  lw $t8, 0($t4)  # $t8 = nº de filas
-  lw $t9, 4($t4)  # $t9 = nº de columnas
+  lw $t8, nFil($t4)  # $t8 = nº de filas
+  lw $t9, nCol($t4)  # $t9 = nº de columnas
 
   li $v0, 4
   la $a0, str_indFila
@@ -236,8 +236,8 @@ select_intercambia:
 
   # Preparar argumentos
   move $t4, $s0   # $t4 = dirección base de matriz de trabajo
-  lw $t8, 0($t4)  # $t8 = nº de filas
-  lw $t9, 4($t4)  # $t9 = nº de columnas
+  lw $t8, nFil($t4)  # $t8 = nº de filas
+  lw $t9, nCol($t4)  # $t9 = nº de columnas
 
   li $v0, 4
   la $a0, str_indFila
@@ -294,8 +294,41 @@ error_dim_fila:
 
   j menu
 
-# select_find_min:
+select_find_min:
 
+  jal find_min
+
+  li $v0, 4
+  la $a0, str_valMin
+  syscall
+
+  li $v0, 1
+  move $a0, $a1
+  syscall
+
+  li $v0, 11
+  li $a0, 44
+  syscall 
+
+  li $v0, 1
+  move $a0, $a2
+  syscall
+
+  li $v0, 4
+  la $a0, str_conValor
+  syscall
+
+  li $v0, 2
+  mov.s $f12, $f0
+  syscall
+
+  li $v0, 11
+  la $a0, LF
+  syscall
+
+  jal print_mat
+
+  j menu
 
 end_program:
   # Imprimir mensaje final
@@ -319,8 +352,8 @@ print_mat:
   # Imprimir dimensiones
 
   move $t4, $s0     # Guardar matriz de trabajo
-  lw $t6, 0($t4)  # $t6 = nº de filas
-  lw $t7, 4($t4)  # $t7 = nº de columnas
+  lw $t6, nFil($t4)  # $t6 = nº de filas
+  lw $t7, nCol($t4)  # $t7 = nº de columnas
 
   # Imprimir mensaje de dimensiones de la matriz
   li $v0, 4
@@ -430,7 +463,8 @@ change_mat:
   jal print_mat
   j menu
 
-  selected_mat4:
+  selected_mat4:  la $t3, infinito
+
   la $s0, mat4
   jal print_mat
   j menu
@@ -507,16 +541,16 @@ intercambia:
   # Calcular dirección del elemento seleccionado
   mul $t1, $t5, $t9
   add $t1, $t1, $t6
-  mul $t1, $t1, 4
+  mul $t1, $t1, sizeF
   add $t1, $t1, $t4
-  addi $t1, $t1, 8
+  add $t1, $t1, elementos
 
   # Calcular dirección del elemento opuesto
   mul $t2, $t7, $t9
   add $t2, $t2, $t0
   mul $t2, $t2, sizeF
   add $t2, $t2, $t4
-  addi $t2, $t2, 8
+  add $t2, $t2, elementos
 
   move $a0, $t1
   move $a1, $t2
@@ -527,3 +561,90 @@ intercambia_fin:
   jal print_mat
 
   j menu
+
+find_min:
+  # Argumentos
+  # $t0 = nº filas
+  # $t1 = nº columnas
+  # $f4 = datos
+  # $f5 = min
+  # $t4 = fmin
+  # $t5 = cmin
+  # $t6 = f
+  # $t7 = c
+  # $t8 = aux
+  # $f6 = valor
+
+  lw $t0, nFil($s0)
+  lw $t1, nCol($s0)
+  move $t2, $s0            # Dirección base de la matriz
+  l.s $f4, elementos($t2)
+  l.s $f5, infinito
+  li $t4, -1
+  li $t5, -1
+  move $t6, $zero
+  move $t7, $zero
+  move $t8, $zero
+
+  for:
+
+  bge $t6, $t0, end_for
+  bge $t7, $t1, end_for
+
+#################################################
+
+  # $t4 - dirección base
+  # $t5 - fila seleccionada
+  # $t6 - columna seleccionada
+  # $t8 - nFil
+  # $t9 - nCol
+
+  # # Calcular dirección del elemento seleccionado
+  # mul $t1, $t5, $t9
+  # add $t1, $t1, $t6
+  # mul $t1, $t1, sizeF
+  # add $t1, $t1, $t4
+  # add $t1, $t1, elementos
+
+
+#################################################
+
+
+#######     ARREGLAR BUCLE FOR PARA QUE HAGA BIEN F++ Y C++ Y YA #######     DEBERIA FUNCIONAR
+
+  mul $t8, $t6, $t1
+  add $t8, $t8, $t7
+  mul $t8, $t8, sizeF
+  add $t8, $t8, $t2
+  add $t8, $t8, elementos
+
+  lwc1 $f6, 0($t8)
+
+  c.lt.s $f6, $f5
+  bc1t cambiar_valores
+
+  addi $t6, $t6, 1
+  addi $t7, $t7, 1
+
+  j for
+
+  cambiar_valores:
+
+  mov.s $f5, $f6
+  move $t4, $t6
+  move $t5, $t7
+
+  addi $t6, $t6, 1
+  addi $t7, $t7, 1
+
+  j for
+
+  end_for:
+
+  mov.s $f0, $f5
+  move $a1, $t4
+  move $a2, $t5  
+
+find_min_fin:
+
+jr $ra
