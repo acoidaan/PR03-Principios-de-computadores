@@ -563,17 +563,6 @@ intercambia_fin:
   j menu
 
 find_min:
-  # Argumentos
-  # $t0 = nº filas
-  # $t1 = nº columnas
-  # $f4 = datos
-  # $f5 = min
-  # $t4 = fmin
-  # $t5 = cmin
-  # $t6 = f
-  # $t7 = c
-  # $t8 = aux
-  # $f6 = valor
 
   lw $t0, nFil($s0)
   lw $t1, nCol($s0)
@@ -587,7 +576,6 @@ find_min:
 
   for_filas:
     bge $t6, $t0, end_for   # Si se recorren todas las filas, terminar
-
     move $t7, $zero     # Reiniciar índice de columna
 
   for_columnas:

@@ -4,3 +4,5 @@
 # zipped
 *.tar.*
 *.gr.*
+
+a.out
