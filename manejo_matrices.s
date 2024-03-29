@@ -578,7 +578,6 @@ find_min:
   lw $t0, nFil($s0)
   lw $t1, nCol($s0)
   move $t2, $s0            # Dirección base de la matriz
-  l.s $f4, elementos($t2)
   l.s $f5, infinito
   li $t4, -1
   li $t5, -1
@@ -586,31 +585,15 @@ find_min:
   move $t7, $zero
   move $t8, $zero
 
-  for:
+  for_filas:
+    bge $t6, $t0, end_for   # Si se recorren todas las filas, terminar
 
-  bge $t6, $t0, end_for
-  bge $t7, $t1, end_for
+    move $t7, $zero     # Reiniciar índice de columna
 
-#################################################
+  for_columnas:
+    bge $t7, $t1, update_fila   # Si se recorren todas las columnas, volver al bucle de filas
 
-  # $t4 - dirección base
-  # $t5 - fila seleccionada
-  # $t6 - columna seleccionada
-  # $t8 - nFil
-  # $t9 - nCol
-
-  # # Calcular dirección del elemento seleccionado
-  # mul $t1, $t5, $t9
-  # add $t1, $t1, $t6
-  # mul $t1, $t1, sizeF
-  # add $t1, $t1, $t4
-  # add $t1, $t1, elementos
-
-
-#################################################
-
-
-#######     ARREGLAR BUCLE FOR PARA QUE HAGA BIEN F++ Y C++ Y YA #######     DEBERIA FUNCIONAR
+  # Calcular dirección de elemento actual
 
   mul $t8, $t6, $t1
   add $t8, $t8, $t7
@@ -620,30 +603,27 @@ find_min:
 
   lwc1 $f6, 0($t8)
 
+  # Comparar con el mínimo actual
   c.lt.s $f6, $f5
-  bc1t cambiar_valores
+  bc1f no_es_minimo
 
-  addi $t6, $t6, 1
-  addi $t7, $t7, 1
-
-  j for
-
-  cambiar_valores:
-
+  # Actualizar mínimo y sus indices
   mov.s $f5, $f6
   move $t4, $t6
   move $t5, $t7
 
-  addi $t6, $t6, 1
-  addi $t7, $t7, 1
+  no_es_minimo:
+    addi $t7, $t7, 1
+    j for_columnas
 
-  j for
+  update_fila:
+    addi $t6, $t6, 1
+    j for_filas
 
   end_for:
-
-  mov.s $f0, $f5
-  move $a1, $t4
-  move $a2, $t5  
+    mov.s $f0, $f5
+    move $a1, $t4
+    move $a2, $t5  
 
 find_min_fin:
 
