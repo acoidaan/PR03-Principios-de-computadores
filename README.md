@@ -1,3 +1,3 @@
 # PR03 Principios de computadores
 
-Currently at 49%
+Currently at **100%** completed
