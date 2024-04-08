@@ -259,6 +259,14 @@ change_mat_fin:
     addi $sp, $sp, 8
     jr $ra
 
+mat_number_error:
+
+  li $v0, 4
+  la $a0, str_numMatMal
+  syscall
+
+  j menu_bucle
+
 main:
 
     li $v0, 4
@@ -295,9 +303,17 @@ menu_bucle:
   # Comprobar la opción del usuario
   beq $t0, 0, end_program
   beq $t0, 1, select_change_mat
-  beq $t0, 3, select_change_elto
-  beq $t0, 4, select_intercambia
-  beq $t0, 7, select_find_min
+  # beq $t0, 3, select_change_elto
+  # beq $t0, 4, select_intercambia
+  # beq $t0, 7, select_find_min
+
+option_error:
+
+    li $v0, 4
+    la $a0, str_errorOpc
+    syscall
+  
+    j menu_bucle
 
 end_program:
 
@@ -323,14 +339,6 @@ select_change_mat:
 
     jal change_mat
     j menu_bucle
-
-mat_number_error:
-
-  li $v0, 4
-  la $a0, str_numMatMal
-  syscall
-
-  j menu_bucle
 
 # select_change_elto:
 
