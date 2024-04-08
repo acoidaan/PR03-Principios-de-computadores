@@ -129,60 +129,61 @@ str_matTiene:	.asciiz	"\n\nLa matriz tiene dimension "
 ##########Imprimir############
 #########Argumentos###########
 # $s0 = Dirección base de la matriz
-# $t0 = nFil
-# $t1 = nCol
-# $t4 = Índice de los elementos
-# $t5 = Índice de la columna
-# $t6 = Filas impresas
-# $t7 = Columnas impresas
+# $s1 = nFil
+# $s2 = nCol
+# $s3 = Dirección base de los elementos de la matriz
+# $s4 = Índice de la fila actual
+# $s5 = Índice de la columna actual
+# $t0 = Desplazamiento calculado para el elemento actual
+# $a1 = Dirección del elemento actual a imprimir
 
-
-print_mat:
-
-    lw $t0, nFil($s0)
-    lw $t1, nCol($s0)
-    addiu $t2, $s0, elementos
-    
+print_mat:   
     # Imprimir la dimensión de la matriz
+
+    addi $sp, $sp, -4
+    sw $ra, 4($sp)
 
     li $v0, 4
     la $a0, str_matTiene
     syscall
 
+    lw $s1, nFil($s0)
     li $v0, 1
-    move $a0, $t0
+    move $a0, $s1
     syscall
 
     li $v0, 11
     li $a0, 120
     syscall
 
+    lw $s2, nCol($s0)
     li $v0, 1
-    move $a0, $t1
+    move $a0, $s2
     syscall
 
+    addiu $s3, $s0, elementos
     li $v0, 11
     la $a0, LF
     syscall
 
     # Inicializar índices de filas y columnas
-    move $t6, $zero
+    move $s4, $zero
 
 # Imprimir elementos de la matriz
 print_while:  
-    beq $t6, $t0, print_mat_fin   # Verificar que no se han impreso todas las filas
+    beq $s4, $s1, print_mat_fin   # Verificar que no se han impreso todas las filas
 
-    li $t7, 0    # Índice de columnas impresas
+    move $s7, $zero    # Índice de columnas impresas
 
 print_row:
-    bge $t7, $t1, print_new_row   # Si $t7 >= $t1 imprimir nueva línea
+    bge $s7, $s2, print_new_row   # Si $s4 >= $t1 imprimir nueva línea
 
-    mul $t8, $t6, $t1    # $t8 = filas impresas * nº columnas
-    add $t8, $t8, $t7     # $t8 += columna impresa
-    mul $t8, $t8, sizeF   # $t8 *= tam_elemento
-    add $t9, $t2, $t8
+    mul $t0, $s4, $s2    # $s7 = filas impresas * nº columnas
+    add $t0, $t0, $s7     # $s7 += columna impresa
+    mul $t0, $t0, sizeF   # $s7 *= tam_elemento
+    add $a1, $s3, $t0
 
-    lwc1 $f12, 0($t9)
+    lwc1 $f12, 0($a1)
     li $v0, 2
     syscall
 
@@ -190,7 +191,7 @@ print_row:
     la $a0, 32
     syscall
 
-    addi $t7, $t7, 1 # Columna impresa += 1
+    addi $s7, $s7, 1 # Columna impresa += 1
 
     j print_row
 
@@ -200,7 +201,7 @@ print_new_row:
     la $a0, LF
     syscall
 
-    addi $t6, $t6, 1  # Fila impresa += 1
+    addi $s4, $s4, 1  # Fila impresa += 1
 
     j print_while
 
@@ -210,7 +211,47 @@ print_mat_fin:
     la $a0, LF
     syscall
 
+    lw $ra, 4($sp)
+    addi $sp, $sp, 4
     jr $ra
+
+change_mat:
+
+    addi $sp, $sp, -4
+    sw $ra, 4($sp)
+
+    li $v0, 4
+    la $a0, str_elijeMat
+
+    li $v0, 5
+    syscall
+    move $t0, $v0
+
+    beq $t0, 1, selected_mat1
+    beq $t0, 2, selected_mat2
+    beq $t0, 3, selected_mat3
+    beq $t0, 4, selected_mat4
+    beq $t0, 5, selected_mat5
+    beq $t0, 6, selected_mat6
+
+selected_mat1:
+
+    la $s1, mat1
+    
+
+selected_mat2:
+
+selected_mat3:
+
+selected_mat4:
+
+selected_mat5:
+
+selected_mat6:
+
+
+change_mat_fin:
+
 
 main:
 
@@ -224,8 +265,7 @@ main:
 # $s0 = matriz de trabajo
 
     la $s0, mat1
-    
-
+  
 ##############################
 ##########Menú################
 
@@ -238,16 +278,40 @@ menu_bucle:
   la $a0, LF
   syscall
 
+  li $v0, 4
+  la $a0, str_menu
+  syscall
+
   li $v0, 5
   syscall
   move $t0, $v0
 
   # Comprobar la opción del usuario
-  beq $t0, 0, fin_programa
-  beq $t0, 1, change_mat
-  beq $t0, 3, change_elto
-  beq $t0, 4, 
+  beq $t0, 0, end_program
+  beq $t0, 1, select_change_mat
+  beq $t0, 3, select_change_elto
+  beq $t0, 4, select_intercambia
+  beq $t0, 7, select_find_min
 
-li $v0, 10
-syscall
+end_program:
 
+    li $v0, 4
+    la $a0, str_termina
+    syscall
+
+    li $v0, 10
+    syscall
+
+select_change_mat:
+
+    li $v0, 5
+    syscall
+    move $a0, $v0
+
+    jal change_mat
+
+select_change_elto:
+
+select_intercambia:
+
+select_find_min:
