@@ -217,41 +217,47 @@ print_mat_fin:
 
 change_mat:
 
-    addi $sp, $sp, -4
+    addi $sp, $sp, -8
     sw $ra, 4($sp)
+    sw $a0, 0($sp)
 
-    li $v0, 4
-    la $a0, str_elijeMat
-
-    li $v0, 5
-    syscall
-    move $t0, $v0
-
-    beq $t0, 1, selected_mat1
-    beq $t0, 2, selected_mat2
-    beq $t0, 3, selected_mat3
-    beq $t0, 4, selected_mat4
-    beq $t0, 5, selected_mat5
-    beq $t0, 6, selected_mat6
+    beq $a0, 1, selected_mat1
+    beq $a0, 2, selected_mat2
+    beq $a0, 3, selected_mat3
+    beq $a0, 4, selected_mat4
+    beq $a0, 5, selected_mat5
+    beq $a0, 6, selected_mat6
 
 selected_mat1:
-
-    la $s1, mat1
-    
+    la $s0, mat1
+    j change_mat_fin
 
 selected_mat2:
+    la $s0, mat2
+    j change_mat_fin
 
 selected_mat3:
+    la $s0, mat3
+    j change_mat_fin
 
 selected_mat4:
+    la $s0, mat4
+    j change_mat_fin
 
 selected_mat5:
+    la $s0, mat5
+    j change_mat_fin
 
 selected_mat6:
-
+    la $s0, mat6
+    j change_mat_fin
 
 change_mat_fin:
 
+    lw $a0, 0($sp)
+    lw $ra, 4($sp)
+    addi $sp, $sp, 8
+    jr $ra
 
 main:
 
@@ -304,14 +310,30 @@ end_program:
 
 select_change_mat:
 
+    li $v0, 4
+    la $a0, str_elijeMat
+    syscall
+
     li $v0, 5
     syscall
     move $a0, $v0
 
+    bgt $a0, 6, mat_number_error
+    blez $a0, mat_number_error 
+
     jal change_mat
+    j menu_bucle
 
-select_change_elto:
+mat_number_error:
 
-select_intercambia:
+  li $v0, 4
+  la $a0, str_numMatMal
+  syscall
 
-select_find_min:
+  j menu_bucle
+
+# select_change_elto:
+
+# select_intercambia:
+
+# select_find_min:
