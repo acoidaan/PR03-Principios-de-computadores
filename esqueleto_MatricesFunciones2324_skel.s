@@ -267,6 +267,137 @@ mat_number_error:
 
   j menu_bucle
 
+change_elto:
+  # $a0 = Dirección base
+  # $a1 = Índice de fila
+  # $a2 = Índice de columna
+  # $f20 = Nuevo valor
+
+  lw $t0, nFil($a0)
+  lw $t1, nCol($a0)
+  addi $t2, $a0, elementos
+
+  mul $t3, $a1, $t1
+  addu $t3, $t3, $a2
+  mul $t3, $t3, sizeF
+  addu $t3, $t3, $t2
+
+  swc1 $f12, 0($t3)
+
+
+change_elto_fin:  
+    
+    jr $ra
+
+swap:
+
+    lwc1 $f4, 0($a0)
+    lwc1 $f6, 0($a1)
+
+    swc1 $f6, 0($a0)
+    swc1 $f4, 0($a1)
+
+swap_fin:
+    jr $ra
+
+intercambia:
+    # $a0 = Matriz base
+    # $a1 = Índice de fila
+    # $a2 = Índice de columna
+    # $t0 = nFil
+    # $t1 = nCol
+    lw $t0, nFil($a0)
+    lw $t1, nCol($a0)
+    addi $t2, $a0, elementos
+
+    mul $t3, $a1, $t1
+    addu $t3, $t3, $a2
+    mul $t3, $t3, sizeF
+    addu $t3, $t3, $t2
+
+    # Calcular posición elemento opuesto
+    sub $t4, $t0, $a1
+    sub $t4, $t4, 1
+    sub $t5, $t1, $a2
+    sub $t5, $t5, 1
+
+    mul $t6, $t4, $t1
+    addu $t6, $t6, $t5
+    mul $t6, $t6, sizeF
+    addu $t6, $t6, $t2
+
+    # Llamamos a función swap
+    addi $sp, $sp, -4
+    sw $ra, 0($sp)
+
+    move $a0, $t3
+    move $a1, $t6
+    jal swap
+
+    lw $ra, 0($sp)
+    addi $sp, $sp, 4
+
+
+intercambia_fin:
+
+    jr $ra
+
+find_min:
+    # $a0 = Matriz base
+    # $t0 = nFil
+    # $t1 = nCol
+    # $t2 = Dirección primer elemento
+
+    lw $t0, nFil($a0)
+    lw $t1, nCol($a0)
+    addu $t2, $a0, elementos
+    li $t3, -1
+    li $t4, -1
+    l.s $f4, infinito
+    move $t5, $zero
+    move $t6, $zero
+
+    for_filas:
+      bge $t5, $t0, end_for
+      move $t6, $zero
+    
+    for_columnas:
+      bge $t6, $t1, actualizar_fila
+
+    # Calcular dirección elemento actual
+    mul $t7, $t5, $t1
+    addu $t7, $t7, $t6
+    mul $t7, $t7, sizeF
+    addu $t7, $t7, $t2
+
+    lwc1 $f5, 0($t7)
+
+    # Comparar
+    c.lt.s $f5, $f4
+    bc1f no_es_minimo
+
+    # Actualizar mínimo y sus índices
+    mov.s $f4, $f5
+    move $t3, $t5
+    move $t4, $t6
+
+    no_es_minimo:
+      addi $t6, $t6, 1
+      j for_columnas
+
+    actualizar_fila:
+      addi $t5, $t5, 1
+      j for_filas
+
+    end_for:
+      mov.s $f0, $f4
+      move $a1, $t3
+      move $a2, $t4
+
+find_min_fin:
+
+    jr $ra
+
 main:
 
     li $v0, 4
@@ -285,27 +416,27 @@ main:
 
 menu_bucle:
 
-  move $a0, $s0
-  jal print_mat
-
-  li $v0, 11
-  la $a0, LF
-  syscall
-
-  li $v0, 4
-  la $a0, str_menu
-  syscall
-
-  li $v0, 5
-  syscall
-  move $t0, $v0
-
-  # Comprobar la opción del usuario
-  beq $t0, 0, end_program
-  beq $t0, 1, select_change_mat
-  # beq $t0, 3, select_change_elto
-  # beq $t0, 4, select_intercambia
-  # beq $t0, 7, select_find_min
+    move $a0, $s0
+    jal print_mat
+  
+    li $v0, 11
+    la $a0, LF
+    syscall
+  
+    li $v0, 4
+    la $a0, str_menu
+    syscall
+  
+    li $v0, 5
+    syscall
+    move $t0, $v0
+  
+    # Comprobar la opción del usuario
+    beq $t0, 0, end_program
+    beq $t0, 1, select_change_mat
+    beq $t0, 3, select_change_elto
+    beq $t0, 4, select_intercambia
+    beq $t0, 7, select_find_min
 
 option_error:
 
@@ -340,8 +471,141 @@ select_change_mat:
     jal change_mat
     j menu_bucle
 
-# select_change_elto:
+select_change_elto:
 
-# select_intercambia:
+    li $v0, 4
+    la $a0, str_indFila
+    syscall
 
-# select_find_min:
+    li $v0, 5
+    syscall
+    move $s1, $v0   # $s1 = fila
+
+    lw $t0, nFil($s0)
+    bge $s1, $t0, error_dim_fila
+    bltz $s1, error_dim_fila
+
+    li $v0, 4
+    la $a0, str_indCol
+    syscall
+
+    li $v0, 5
+    syscall
+    move $s2, $v0  # $s2 = columna
+
+    lw $t0, nCol($s0)
+    bge $s2, $t0, error_dim_col
+    bltz $s2, error_dim_col 
+
+    li $v0, 4
+    la $a0, str_nuevoValor
+    syscall
+
+    li $v0, 6
+    syscall
+    mov.s $f20, $f0
+
+    move $a0, $s0
+    move $a1, $s1
+    move $a2, $s2
+    mov.s $f12, $f20
+
+    jal change_elto
+    j menu_bucle
+
+select_intercambia:
+
+    li $v0, 4
+    la $a0, str_indFila
+    syscall
+
+    li $v0, 5
+    syscall
+    move $s1, $v0
+
+    lw $t0, nFil($s0)
+    bge $s1, $t0, error_dim_fila
+    bltz $s1, error_dim_fila
+
+    li $v0, 4
+    la $a0, str_indCol
+    syscall
+
+    li $v0, 5
+    syscall
+    move $s2, $v0
+
+    lw $t0, nCol($s0)
+    bge $s2, $t0, error_dim_col
+    bltz $s2, error_dim_col
+
+    move $a0, $s0
+    move $a1, $s1
+    move $a2, $s2
+
+    jal intercambia
+    j menu_bucle
+
+error_dim_fila:
+
+    li $v0, 4
+    la $a0, str_errorFil
+    syscall
+
+    li $v0, 11
+    la $a0, LF
+    syscall
+
+    j menu_bucle
+
+error_dim_col:
+
+    li $v0, 4
+    la $a0, str_errorCol
+    syscall
+
+    li $v0, 11
+    la $a0, LF
+    syscall
+
+    j menu_bucle
+
+select_find_min:
+
+    move $a0, $s0
+
+    jal find_min
+
+    move $s1, $a1
+    move $s2, $a2
+    mov.s $f20, $f0
+
+    li $v0, 4
+    la $a0, str_valMin
+    syscall
+
+    li $v0, 1
+    move $a0, $s1
+    syscall
+
+    li $v0, 11
+    li $a0, 44
+    syscall
+
+    li $v0, 1
+    move $a0, $s2
+    syscall
+
+    li $v0, 4
+    la $a0, str_conValor
+    syscall
+
+    li $v0, 2
+    mov.s $f12, $f20
+    syscall
+
+    li $v0, 11
+    la $a0, LF
+    syscall
+
+    j menu_bucle
