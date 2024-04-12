@@ -125,95 +125,113 @@ str_conValor:	.asciiz	") con valor "
 str_matTiene:	.asciiz	"\n\nLa matriz tiene dimension "
 
     .text
+    
 ##############################
 ##########Imprimir############
-#########Argumentos###########
-# $s0 = Dirección base de la matriz
-# $s1 = nFil
-# $s2 = nCol
-# $s3 = Dirección base de los elementos de la matriz
-# $s4 = Índice de la fila actual
-# $s5 = Índice de la columna actual
-# $t0 = Desplazamiento calculado para el elemento actual
-# $a1 = Dirección del elemento actual a imprimir
+# Descripción: Función que imprime el contenido de una matriz
+# Argumentos:
+# $s0: Dirección base de la matriz
+# $s1: nFil (número de filas)
+# $s2: nCol (número de columnas)
+# $s3: Dirección base de los elementos de la matriz
+# $s4: Índice de la fila actual
+# $s5: Índice de la columna actual
+# $t0: Desplazamiento calculado para el elemento actual
+# $a1: Dirección del elemento actual a imprimir
 
 print_mat:   
-    # Imprimir la dimensión de la matriz
-
+    # Reserva espacio en la pila y guarda el registro $ra
     addi $sp, $sp, -4
     sw $ra, 4($sp)
 
+    # Imprime la dimensión de la matriz
     li $v0, 4
     la $a0, str_matTiene
     syscall
 
-    lw $s1, nFil($s0)
+    lw $s1, nFil($s0)   # Imprime el número de filas
     li $v0, 1
     move $a0, $s1
     syscall
 
-    li $v0, 11
+    li $v0, 11          # Imprime una 'x' entre el número de fila y columna
     li $a0, 120
     syscall
 
-    lw $s2, nCol($s0)
+    lw $s2, nCol($s0)   # Imprime el número de columnas
     li $v0, 1
     move $a0, $s2
     syscall
 
-    addiu $s3, $s0, elementos
-    li $v0, 11
+    addiu $s3, $s0, elementos  # Ajusta la dirección base de los elementos
+
+    li $v0, 11    # Imprime un salto de línea
     la $a0, LF
     syscall
 
-    # Inicializar índices de filas y columnas
+    # Inicializar índices de filas
     move $s4, $zero
 
-# Imprimir elementos de la matriz
-print_while:  
+    
+print_while:    # Bucle para imprimir los elementos de la matriz  
     beq $s4, $s1, print_mat_fin   # Verificar que no se han impreso todas las filas
 
-    move $s7, $zero    # Índice de columnas impresas
+    move $s5, $zero    # Reinicia el índice de columna
 
-print_row:
-    bge $s7, $s2, print_new_row   # Si $s4 >= $t1 imprimir nueva línea
+print_row:    # Bucle para imprimir una fila
+    bge $s5, $s2, print_new_row   # Si se han impreso todas las columnas, nueva fila
 
-    mul $t0, $s4, $s2    # $s7 = filas impresas * nº columnas
-    add $t0, $t0, $s7     # $s7 += columna impresa
-    mul $t0, $t0, sizeF   # $s7 *= tam_elemento
-    add $a1, $s3, $t0
+    # Calculamos el desplazamiento del elemento actual
+    mul $t0, $s4, $s2     # $t0 = Índice de fila actual * nCol
+    addu $t0, $t0, $s5    # $t0 = (Índice de fila actual * nCol) + Índice de columna actual 
+    mul $t0, $t0, sizeF   # $t0 *= ((Índice de fila actual * nCol) + Índice de columna actual) * tamaño_elemento
+    addu $a1, $s3, $t0    # $a1 = Dirección base matriz + Desplazamiento calculado
 
+    # Carga e imprime el elemento actual
     lwc1 $f12, 0($a1)
     li $v0, 2
     syscall
 
+    # Imprime un espacio
     li $v0, 11
     la $a0, 32
     syscall
 
-    addi $s7, $s7, 1 # Columna impresa += 1
+    # Avanza al siguiente elemento de la columna
+    addi $s5, $s5, 1 # Columna impresa += 1
 
     j print_row
 
-print_new_row:
-
+print_new_row:    # Prepara para la siguiente fila
+    
+    # Imprime salto de línea
     li $v0, 11
     la $a0, LF
     syscall
 
+    # Avanza al siguiente índice de fila
     addi $s4, $s4, 1  # Fila impresa += 1
 
     j print_while
 
-print_mat_fin:
+print_mat_fin:    # Termina la impresión de la matriz
 
+    # Imprime salto de línea
     li $v0, 11
     la $a0, LF
     syscall
 
+    # Recupera el registro $ra y libera la pila
     lw $ra, 4($sp)
     addi $sp, $sp, 4
+
     jr $ra
+
+##############################
+#######Cambiar matriz#########
+# Descripción: Función que cambia la matriz de trabajo
+# Argumentos:
+# $a0: Número de la matriz a seleccionar (1-6)
 
 change_mat:
 
@@ -221,190 +239,241 @@ change_mat:
     sw $ra, 4($sp)
     sw $a0, 0($sp)
 
-    beq $a0, 1, selected_mat1
-    beq $a0, 2, selected_mat2
-    beq $a0, 3, selected_mat3
-    beq $a0, 4, selected_mat4
-    beq $a0, 5, selected_mat5
-    beq $a0, 6, selected_mat6
+    beq $a0, 1, selected_mat1   # Si $a0 = 1, salta a la selected_mat1
+    beq $a0, 2, selected_mat2   # Si $a0 = 2, salta a la selected_mat2
+    beq $a0, 3, selected_mat3   # Si $a0 = 3, salta a la selected_mat3
+    beq $a0, 4, selected_mat4   # Si $a0 = 4, salta a la selected_mat4
+    beq $a0, 5, selected_mat5   # Si $a0 = 5, salta a la selected_mat5
+    beq $a0, 6, selected_mat6   # Si $a0 = 6, salta a la selected_mat6
 
 selected_mat1:
-    la $s0, mat1
-    j change_mat_fin
+    la $s0, mat1          # Carga la dirección de mat1 en $s0
+    j change_mat_fin      # Salta a la finalización
 
 selected_mat2:
-    la $s0, mat2
-    j change_mat_fin
+    la $s0, mat2          # Carga la dirección de mat2 en $s0
+    j change_mat_fin      # Salta a la finalización
 
 selected_mat3:
-    la $s0, mat3
-    j change_mat_fin
+    la $s0, mat3          # Carga la dirección de mat3 en $s0
+    j change_mat_fin      # Salta a la finalización
 
 selected_mat4:
-    la $s0, mat4
-    j change_mat_fin
+    la $s0, mat4          # Carga la dirección de mat4 en $s0
+    j change_mat_fin      # Salta a la finalización
 
 selected_mat5:
-    la $s0, mat5
-    j change_mat_fin
+    la $s0, mat5          # Carga la dirección de mat5 en $s0
+    j change_mat_fin      # Salta a la finalización
 
 selected_mat6:
-    la $s0, mat6
-    j change_mat_fin
+    la $s0, mat6          # Carga la dirección de mat6 en $s0
+    j change_mat_fin      # Salta a la finalización
 
-change_mat_fin:
+change_mat_fin:     # Restaura el estado anterior y termina la función
 
-    lw $a0, 0($sp)
-    lw $ra, 4($sp)
-    addi $sp, $sp, 8
-    jr $ra
+    lw $a0, 0($sp)    # Recupera el número de la matriz original
+    lw $ra, 4($sp)    # Recupera el registro $ra
+    addi $sp, $sp, 8  # Ajusta el puntero de la pila
 
-mat_number_error:
+    jr $ra            # Retorna de la función
 
-  li $v0, 4
-  la $a0, str_numMatMal
-  syscall
+mat_number_error:   # Si el número de la matriz no correcto, volver al menú con mensaje de error
 
-  j menu_bucle
+    li $v0, 4
+    la $a0, str_numMatMal   # Mensaje de error
+    syscall
+
+    j menu_bucle    # Vuelta al bucle
+
+##############################
+#######Cambiar elemento#######
+# Descripción: Función que cambia un elemento en la matriz de trabajo
+# Argumentos:
+# $a0: Dirección base de la estructura de la matriz
+# $a1: Índice de la fila del elemento a cambiar
+# $a2: Índice de la columna del elemento a cambiar
+# $f20: Nuevo valor flotante para el elemento
 
 change_elto:
-  # $a0 = Dirección base
-  # $a1 = Índice de fila
-  # $a2 = Índice de columna
-  # $f20 = Nuevo valor
 
-  lw $t0, nFil($a0)
-  lw $t1, nCol($a0)
-  addi $t2, $a0, elementos
+    # Cargar el número de filas y columnas de la matriz
+    lw $t0, nFil($a0)           # $t0 = nFil
+    lw $t1, nCol($a0)           # $t1 = nCol
+    addi $t2, $a0, elementos    # $t2 = Dirección base de los elementos de la matriz
 
-  mul $t3, $a1, $t1
-  addu $t3, $t3, $a2
-  mul $t3, $t3, sizeF
-  addu $t3, $t3, $t2
+    # Calcular el desplazamiento en memoria del elemento a cambiar.
+    mul $t3, $a1, $t1     # $t3 = Índice de fila actual * nCol
+    addu $t3, $t3, $a2    # $t3 = (Índice de fila actual * nCol) + Índice de columna actual
+    mul $t3, $t3, sizeF   # $t3 = ((Índice de fila actual * nCol) + Índice de columna actual) * tamaño_elemento
+    addu $t3, $t3, $t2    # $t3 = Dirección base de los elementos de la matriz + Desplazamiento calculado
 
-  swc1 $f12, 0($t3)
+    # Establece el nuevo valor del elemento en la dirección calculada
+    swc1 $f12, 0($t3)     # Almacena el nuevo valor flotante en la dirección calculada
 
 
 change_elto_fin:  
-    
+    # Retorna de la función
     jr $ra
+
+##############################
+###########Swap###############
+# Descripción: Esta función intercambia los valores de dos registros de punto flotante.
+# Argumentos:
+# $a0: Dirección de memoria del primer registro de coma flotante.
+# $a1: Dirección de memoria del segundo registro de coma flotante.
+# $f4: Almacena el valor del primer registro de coma flotante.
+# $f6: Almacena el valor del segundo registro de coma flotante.
 
 swap:
 
-    lwc1 $f4, 0($a0)
-    lwc1 $f6, 0($a1)
+    # Intercambia los valores de los registros de coma flotante en las direcciones de memoria $a0 y $a1
+    lwc1 $f4, 0($a0)    # Carga el valor del primer registro de coma flotante en $f4
+    lwc1 $f6, 0($a1)    # Carga el valor del segundo registro de coma flotante en $f6
 
-    swc1 $f6, 0($a0)
-    swc1 $f4, 0($a1)
+    swc1 $f6, 0($a0)    # Almacena el valor de $f6 en la dirección de memoria $a0
+    swc1 $f4, 0($a1)    # Almacena el valor de $f4 en la dirección de memoria $a1
 
 swap_fin:
+    # Retorna de la función
     jr $ra
 
+##############################
+#########Intercambia##########
+# Descripción: Esta función calcula las direcciones de memoria de los elementos a intercambiar en la matriz,
+# llama a la función swap para realizar el intercambio y luego retorna.
+# Argumentos:
+# $a0: Puntero a la matriz.
+# $a1: Índice de la fila del primer elemento a intercambiar.
+# $a2: Índice de la columna del primer elemento a intercambiar.
+# $t0: Número de filas de la matriz.
+# $t1: Número de columnas de la matriz.
+# $t2: Puntero al primer elemento de la matriz.
+# $t3: Dirección del primer elemento a intercambiar.
+# $t4: Índice de la fila del segundo elemento a intercambiar.
+# $t5: Índice de la columna del segundo elemento a intercambiar.
+# $t6: Dirección del segundo elemento a intercambiar.
+
 intercambia:
-    # $a0 = Matriz base
-    # $a1 = Índice de fila
-    # $a2 = Índice de columna
-    # $t0 = nFil
-    # $t1 = nCol
-    lw $t0, nFil($a0)
-    lw $t1, nCol($a0)
-    addi $t2, $a0, elementos
+    # Cargar el número de filas y columnas de la matriz
+    lw $t0, nFil($a0)           # $t0 = nFil
+    lw $t1, nCol($a0)           # $t1 = nCol
+    addi $t2, $a0, elementos    # $t2 = Dirección base de los elementos de la matriz
 
-    mul $t3, $a1, $t1
-    addu $t3, $t3, $a2
-    mul $t3, $t3, sizeF
-    addu $t3, $t3, $t2
+    # Calcular el desplazamiento en memoria del elemento a intercambiar.
+    mul $t3, $a1, $t1     # $t3 = Índice de fila actual * nCol
+    addu $t3, $t3, $a2    # $t3 = (Índice de fila actual * nCol) + Índice de columna actual
+    mul $t3, $t3, sizeF   # $t3 = ((Índice de fila actual * nCol) + Índice de columna actual) * tamaño_elemento
+    addu $t3, $t3, $t2    # $t3 = Dirección base de los elementos de la matriz + Desplazamiento calculado
 
-    # Calcular posición elemento opuesto
-    sub $t4, $t0, $a1
-    sub $t4, $t4, 1
-    sub $t5, $t1, $a2
-    sub $t5, $t5, 1
+    # Calcular posición del elemento opuesto
+    sub $t4, $t0, $a1    # $t4 = nFil - Índice de fila actual - 1
+    sub $t5, $t1, $a2    # $t5 = nCol - Índice de columna actual - 1
+    mul $t6, $t4, $t1    # $t6 = (nFil - Índice de fila actual - 1) * nCol
+    addu $t6, $t6, $t5   # $t6 = (nFil - Índice de fila actual - 1) * nCol + (nCol - Índice de columna actual - 1)
+    mul $t6, $t6, sizeF  # $t6 = ((nFil - Índice de fila actual - 1) * nCol + (nCol - Índice de columna actual - 1)) * tamaño_elemento
+    addu $t6, $t6, $t2   # $t6 = Dirección base de los elementos de la matriz + Desplazamiento calculado
 
-    mul $t6, $t4, $t1
-    addu $t6, $t6, $t5
-    mul $t6, $t6, sizeF
-    addu $t6, $t6, $t2
-
-    # Llamamos a función swap
+    # Llamamos a la función swap
     addi $sp, $sp, -4
     sw $ra, 0($sp)
-
+    
     move $a0, $t3
     move $a1, $t6
     jal swap
-
-    lw $ra, 0($sp)
+    
+    lw $ra, 0($sp)    # Restauramos la pila
     addi $sp, $sp, 4
 
-
 intercambia_fin:
-
+    # Retorna de la función
     jr $ra
 
+##############################
+#########Intercambia##########
+# Descripción: Esta función encuentra el valor mínimo en una matriz y devuelve sus índices de fila y columna.
+# Argumentos:
+# $a0: Dirección base de la matriz
+# $a1: Dirección de memoria donde se almacenará el índice de fila del valor mínimo
+# $a2: Dirección de memoria donde se almacenará el índice de columna del valor mínimo
+# $t0: Almacena el número de filas de la matriz
+# $t1: Almacena el número de columnas de la matriz
+# $t2: Almacena la dirección del primer elemento de la matriz
+# $t3: Almacena el índice de fila del valor mínimo encontrado
+# $t4: Almacena el índice de columna del valor mínimo encontrado
+# $t5: Variable de control para el bucle de filas
+# $t6: Variable de control para el bucle de columnas
+# $t7: Almacena la dirección del elemento actual en la matriz
+# $f0: Almacena el valor mínimo encontrado
+# $f4: Almacena el valor mínimo actual durante la iteración
+
 find_min:
-    # $a0 = Matriz base
-    # $t0 = nFil
-    # $t1 = nCol
-    # $t2 = Dirección primer elemento
+    lw $t0, nFil($a0)        # Carga el número de filas de la matriz
+    lw $t1, nCol($a0)        # Carga el número de columnas de la matriz
+    addu $t2, $a0, elementos # Calcula la dirección del primer elemento en la matriz
+    li $t3, -1               # Inicializa el índice de fila del valor mínimo en -1
+    li $t4, -1               # Inicializa el índice de columna del valor mínimo en -1
+    l.s $f4, infinito        # Carga el valor máximo de punto flotante como el valor mínimo inicial
+    move $t5, $zero          # Inicializa el contador de filas en 0
+    move $t6, $zero          # Inicializa el contador de columnas en 0
 
-    lw $t0, nFil($a0)
-    lw $t1, nCol($a0)
-    addu $t2, $a0, elementos
-    li $t3, -1
-    li $t4, -1
-    l.s $f4, infinito
-    move $t5, $zero
-    move $t6, $zero
-
-    for_filas:
-      bge $t5, $t0, end_for
-      move $t6, $zero
+for_filas:
+    bge $t5, $t0, end_for  # Si el contador de filas es mayor o igual al número de filas, salir del bucle
+    move $t6, $zero        # Reinicia el contador de columnas a 0
     
-    for_columnas:
-      bge $t6, $t1, actualizar_fila
+for_columnas:
+    bge $t6, $t1, actualizar_fila  # Si el contador de columnas es mayor o igual al número de columnas, ir a la siguiente fila
 
-    # Calcular dirección elemento actual
-    mul $t7, $t5, $t1
-    addu $t7, $t7, $t6
-    mul $t7, $t7, sizeF
-    addu $t7, $t7, $t2
+    # Calcula la dirección del elemento actual
+    mul $t7, $t5, $t1       # Calcula el desplazamiento para la fila
+    addu $t7, $t7, $t6      # Añade el índice de columna al desplazamiento
+    mul $t7, $t7, sizeF     # Calcula el desplazamiento en bytes multiplicando el desplazamiento por el tamaño de un float
+    addu $t7, $t7, $t2      # Añade la dirección base de la matriz al desplazamiento en bytes
 
-    lwc1 $f5, 0($t7)
+    lwc1 $f5, 0($t7)        # Carga el valor flotante del elemento actual
 
-    # Comparar
-    c.lt.s $f5, $f4
-    bc1f no_es_minimo
+    # Compara el valor actual con el valor mínimo
+    c.lt.s $f5, $f4         # Compara los valores flotantes
+    bc1f no_es_minimo       # Si el valor actual no es menor que el valor mínimo, saltar a la actualización del valor mínimo
 
-    # Actualizar mínimo y sus índices
-    mov.s $f4, $f5
-    move $t3, $t5
-    move $t4, $t6
+    # Actualiza el valor mínimo y sus índices
+    mov.s $f4, $f5          # Mueve el valor actual al registro del valor mínimo
+    move $t3, $t5           # Mueve el índice de fila actual al registro del índice de fila mínimo
+    move $t4, $t6           # Mueve el índice de columna actual al registro del índice de columna mínimo
 
-    no_es_minimo:
-      addi $t6, $t6, 1
-      j for_columnas
+no_es_minimo:
+    addi $t6, $t6, 1      # Incrementa el contador de columnas
+    j for_columnas        # Vuelve al bucle de columnas
+    move $t3, $t5             # Mueve el índice de fila actual al registro del índice de fila mínimo
+    move $t4, $t6           # Mueve el índice de columna actual al registro del índice de columna mínimo
+    addi $t5, $t5, 1      # Incrementa el contador de filas
+    j for_filas           # Vuelve al bucle de filas
+    
+no_es_minimo:
+    addi $t6, $t6, 1      # Incrementa el contador de columnas
+    j for_columnas        # Vuelve al bucle de columnas
+    move $a1, $t3         # Mueve el índice de fila del valor mínimo al registro de retorno
+    
+actualizar_fila:        # Mueve el índice de columna del valor mínimo al registro de retorno
+    addi $t5, $t5, 1      # Incrementa el contador de filas
+    j for_filas           # Vuelve al bucle de filas
 
-    actualizar_fila:
-      addi $t5, $t5, 1
-      j for_filas
-
-    end_for:
-      mov.s $f0, $f4
-      move $a1, $t3
-      move $a2, $t4
+end_for:                # Retorna de la función
+    mov.s $f0, $f4        # Mueve el valor mínimo al registro de retorno
+    move $a1, $t3         # Mueve el índice de fila del valor mínimo al registro de retorno
+    move $a2, $t4         # Mueve el índice de columna del valor mínimo al registro de retorno
 
 find_min_fin:
 
-    jr $ra
+    jr $ra                  # Retorna de la función
+
 
 main:
 
-    li $v0, 4
-    la $a0, str_titulo
-    syscall
-
-##############################
+  li $v0, 4
+  la $a0, str_titulo
+  syscall
+    
 #######Inicialización#########
 #########Argumentos###########
 # $s0 = matriz de trabajo
